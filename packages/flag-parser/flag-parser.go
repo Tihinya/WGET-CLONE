@@ -27,13 +27,15 @@ func CreateParser() *flagParser {
 	}
 }
 
-func (f *flagParser) Add(flagName, description string, isBool bool) {
+func (f *flagParser) Add(flagName, description string, isBool bool) *flagParser {
 	if _, exist := f.whitelist[flagName]; !exist {
 		f.whitelist[flagName] = Flag{
 			description: description,
 			isBool:      isBool,
 		}
 	}
+
+	return f
 }
 
 func (p *flagParser) Parse(args []string) (*flagStorage, error) {
@@ -92,5 +94,5 @@ func (flag Flag) GetValue() string {
 }
 
 func init() {
-	re = regexp.MustCompile(`^-(?:(?:-(?P<long>[a-zA-Z\-]{2,}))|(?P<short>[a-zA-Z]{1}))\s*(?:=\s*(?P<value>[a-zA-Z0-9]{1,}))?$`)
+	re = regexp.MustCompile(`^-(?:(?:-(?P<long>[a-zA-Z\-]{2,}))|(?P<short>[a-zA-Z]{1}))\s*(?:=\s*(?P<value>[a-zA-Z0-9/.]{1,}))?$`)
 }
