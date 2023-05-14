@@ -6,12 +6,14 @@ import (
 	"log"
 	"os"
 	"path"
+	"strconv"
+	"strings"
 	"time"
 	"wget/packages/downloader"
 	flag_parser "wget/packages/flag-parser"
 )
 
-const outputFormat = "Content size: %d bytes [~ %.2f Mb]\nSaving file to: %s\nFinished at %s\n"
+const outputFormat = "Content size: %d bytes [~ %.2f Mb]\nSaving file to: %s%s\nFinished at %s\n"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -41,6 +43,7 @@ func main() {
 
 	fileName := ""
 	dirPath := ""
+	var limit int64 = 0
 
 	if flag, err := storage.GetFlag("O"); err == nil {
 		fileName = flag.GetValue()
@@ -50,6 +53,10 @@ func main() {
 
 	if flag, err := storage.GetFlag("P"); err == nil {
 		dirPath = flag.GetValue()
+		if !strings.HasSuffix(dirPath, "/") {
+			dirPath += "/"
+		}
+
 		if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 			err := os.Mkdir(dirPath, fs.ModeDir|0755)
 			if err != nil {
@@ -58,12 +65,19 @@ func main() {
 		}
 	}
 
-	currentSize, err := downloader.Download(url, fileName, dirPath)
+	if flag, err := storage.GetFlag("rate-limit"); err == nil {
+		limit, err = strconv.ParseInt(flag.GetValue(), 10, 64)
+		if err != nil {
+			log.Fatalln("Error: invalid rate-limit value")
+		}
+	}
+
+	currentSize, err := downloader.Download(url, fileName, dirPath, limit)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	fmt.Printf(outputFormat, currentSize, bytesToMb(currentSize), fileName, formatTime(time.Now()))
+	fmt.Printf(outputFormat, currentSize, bytesToMb(currentSize), dirPath, fileName, formatTime(time.Now()))
 }
 
 func formatTime(t time.Time) string {
