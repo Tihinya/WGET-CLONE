@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"time"
 	"wget/packages/downloader"
@@ -46,6 +47,7 @@ func main() {
 
 	fileName := ""
 	dirPath := ""
+	limit := 0
 
 	if flag, err := storage.GetFlag("O"); err == nil && !storage.HasFlag("i") {
 		fileName = flag.GetValue()
@@ -60,11 +62,22 @@ func main() {
 
 	if flag, err := storage.GetFlag("P"); err == nil {
 		dirPath = flag.GetValue()
+		if !strings.HasSuffix(dirPath, "/") {
+			dirPath += "/"
+		}
+
 		if _, err := os.Stat(dirPath); os.IsNotExist(err) {
 			err := os.Mkdir(dirPath, fs.ModeDir|0755)
 			if err != nil {
 				log.Fatalln(err)
 			}
+		}
+	}
+
+	if flag, err := storage.GetFlag("rate-limit"); err == nil {
+		limit, err = utils.SwitchCases(flag.GetValue())
+		if err != nil {
+			log.Fatalf("Error: %v", err)
 		}
 	}
 
@@ -83,11 +96,11 @@ func main() {
 				temp = path.Base(url)
 			}
 
-			downloader.Download(url, temp, dirPath, ch, &wg)
+			go downloader.Download(url, temp, dirPath, limit, ch, &wg)
 		}
 
+		wg.Wait()
 	}()
-	wg.Wait()
 
 	for result := range ch {
 		if result.Err != nil {

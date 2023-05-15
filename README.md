@@ -3,22 +3,22 @@
 ## Features
 
 - download file with given URL
-  - under a different name
-  - in specific directory
-  - with limiting the rate speed of a download
+  - ✅ under a different name
+  - ✅ in specific directory
+  - ✅ with limiting the rate speed of a download
   - download file in backgorund
 - download multiple files by reading links from specified file
 - download entire website page
 - display:
-  - time when download started(format yyyy-mm-dd hh:mm:ss)
-  - status request if OK, otherwise show error
+  - ✅ time when download started(format yyyy-mm-dd hh:mm:ss)
+  - ✅ status request if OK, otherwise show error
   - size of downloaded content(Mb, Gb)
-  - name and path of saved file
+  - ✅ name and path of saved file
   - progress bar:
     - size which already downloaded in Kb or Mb
-    - percantage
+    - ✅ percantage
     - remaining time
-  - time when download finished(format yyyy-mm-dd hh:mm:ss)
+  - ✅ time when download finished(format yyyy-mm-dd hh:mm:ss)
 
 Example of output:
 
