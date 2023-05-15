@@ -17,6 +17,7 @@ type flagParser struct {
 
 type flagStorage struct {
 	flags map[string]Flag
+	tags  []string
 }
 
 var re *regexp.Regexp
@@ -47,7 +48,8 @@ func (p *flagParser) Parse(args []string) (*flagStorage, error) {
 		match := re.FindStringSubmatch(value)
 
 		if len(match) < 3 {
-			return nil, fmt.Errorf("invalid argument: %s", value)
+			storage.tags = append(storage.tags, value)
+			continue
 		}
 
 		flagName := ""
@@ -87,6 +89,10 @@ func (storage flagStorage) GetFlag(flagName string) (*Flag, error) {
 		return &flag, nil
 	}
 	return nil, fmt.Errorf("no such flag %s", flagName)
+}
+
+func (storate flagStorage) GetTags() []string {
+	return storate.tags
 }
 
 func (flag Flag) GetValue() string {

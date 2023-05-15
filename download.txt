@@ -1,0 +1,2 @@
+https://pbs.twimg.com/media/EMtmPFLWkAA8CIS.jpg
+https://golang.org/dl/go1.16.3.linux-amd64.tar.gz

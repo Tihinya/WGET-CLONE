@@ -6,21 +6,20 @@ import (
 	"log"
 	"os"
 	"path"
+	"sync"
 	"time"
 	"wget/packages/downloader"
 	flag_parser "wget/packages/flag-parser"
+	"wget/packages/utils"
 )
 
-const outputFormat = "Content size: %d bytes [~ %.2f Mb]\nSaving file to: %s\nFinished at %s\n"
+const outputFormat = "Content size: %d bytes [~ %.2f Mb]\nSaving file to: %s\n"
 
 func main() {
 	if len(os.Args) < 2 {
 		fmt.Println("Usage: go run main.go URL")
 		return
 	}
-
-	flags := os.Args[1 : len(os.Args)-1]
-	url := os.Args[len(os.Args)-1]
 
 	storage, err := flag_parser.CreateParser().
 		Add("B", "backgound download. When the program containing this flag is executed it should output : Output will be written to `wget-log`", true).
@@ -31,10 +30,16 @@ func main() {
 		Add("mirror", "download entire website", true).
 		Add("reject", "specifies which file suffixes will be avoided", false).
 		Add("exclude", "specifies which paths will be avoided", false).
-		Parse(flags)
+		Parse(os.Args[1:])
 
 	if err != nil {
-		log.Fatalf("Error: %v", err)
+		log.Fatalf("Error parsing flag: %v\n", err)
+	}
+
+	urls := make([]string, 0)
+
+	if urlArg := storage.GetTags(); len(urlArg) > 0 {
+		urls = append(urls, urlArg[0])
 	}
 
 	fmt.Printf("Start at %s\n", formatTime(time.Now()))
@@ -42,10 +47,15 @@ func main() {
 	fileName := ""
 	dirPath := ""
 
-	if flag, err := storage.GetFlag("O"); err == nil {
+	if flag, err := storage.GetFlag("O"); err == nil && !storage.HasFlag("i") {
 		fileName = flag.GetValue()
-	} else {
-		fileName = path.Base(url)
+	}
+
+	if flag, err := storage.GetFlag("i"); err == nil {
+		urls, err = utils.ReadLines(flag.GetValue())
+		if err != nil {
+			log.Fatalf("Error reading file: %v\n", err)
+		}
 	}
 
 	if flag, err := storage.GetFlag("P"); err == nil {
@@ -58,12 +68,36 @@ func main() {
 		}
 	}
 
-	currentSize, err := downloader.Download(url, fileName, dirPath)
-	if err != nil {
-		log.Fatalln(err)
+	ch := make(chan downloader.DownloadResult)
+
+	var wg sync.WaitGroup
+
+	go func() {
+		defer close(ch)
+
+		for _, url := range urls {
+			wg.Add(1)
+
+			temp := fileName
+			if fileName == "" {
+				temp = path.Base(url)
+			}
+
+			downloader.Download(url, temp, dirPath, ch, &wg)
+		}
+
+	}()
+	wg.Wait()
+
+	for result := range ch {
+		if result.Err != nil {
+			log.Fatalln(result.Err)
+		}
+
+		fmt.Printf(outputFormat, result.Size, bytesToMb(result.Size), result.File)
 	}
 
-	fmt.Printf(outputFormat, currentSize, bytesToMb(currentSize), fileName, formatTime(time.Now()))
+	fmt.Printf("Finished at %s\n", formatTime(time.Now()))
 }
 
 func formatTime(t time.Time) string {
