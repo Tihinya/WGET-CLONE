@@ -6,11 +6,11 @@ import (
 	"log"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 	"wget/packages/downloader"
 	flag_parser "wget/packages/flag-parser"
+	"wget/packages/utils"
 )
 
 const outputFormat = "Content size: %d bytes [~ %.2f Mb]\nSaving file to: %s%s\nFinished at %s\n"
@@ -43,7 +43,7 @@ func main() {
 
 	fileName := ""
 	dirPath := ""
-	var limit int64 = 0
+	limit := 0
 
 	if flag, err := storage.GetFlag("O"); err == nil {
 		fileName = flag.GetValue()
@@ -66,9 +66,9 @@ func main() {
 	}
 
 	if flag, err := storage.GetFlag("rate-limit"); err == nil {
-		limit, err = strconv.ParseInt(flag.GetValue(), 10, 64)
+		limit, err = utils.SwitchCases(flag.GetValue())
 		if err != nil {
-			log.Fatalln("Error: invalid rate-limit value")
+			log.Fatalf("Error: %v", err)
 		}
 	}
 
