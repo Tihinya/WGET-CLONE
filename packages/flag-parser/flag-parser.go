@@ -3,6 +3,7 @@ package flag_parser
 import (
 	"fmt"
 	"regexp"
+	"wget/packages/utils"
 )
 
 type Flag struct {
@@ -93,6 +94,31 @@ func (storage flagStorage) GetFlag(flagName string) (*Flag, error) {
 
 func (storate flagStorage) GetTags() []string {
 	return storate.tags
+}
+
+func (storate flagStorage) ArgsExcluded(names ...string) []string {
+	args := make([]string, 0)
+	for name, flag := range storate.flags {
+		if utils.IsContains(names, name) {
+			continue
+		}
+
+		temp := name
+		if len(name) > 1 {
+			temp = "-" + temp
+		}
+		temp = "-" + temp
+
+		if !flag.isBool {
+			temp += "=" + flag.value
+		}
+
+		args = append(args, temp)
+	}
+
+	args = append(args, storate.tags...)
+
+	return args
 }
 
 func (flag Flag) GetValue() string {
