@@ -1,8 +1,8 @@
 package downloader
 
 import (
+	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -54,9 +54,9 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	}
 
 	if resp.StatusCode == http.StatusOK {
-		log.Printf("Downloading file: %s. Status 200 OK\n", fileName)
+		fmt.Printf("Downloading file: %s. Status 200 OK\n", fileName)
 	} else {
-		log.Printf("Error downloading %s: recieved status code %d\n", url, resp.StatusCode)
+		fmt.Printf("Error downloading %s: recieved status code %d\n", url, resp.StatusCode)
 	}
 
 	file, err := os.Create(d.path + fileName)
@@ -104,7 +104,7 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	}
 
 	if resp.ContentLength > 0 && d.progressBar {
-		log.Printf("\r[%s] %.2f%% of %d bytes\n", pb.ProgressBar(currentSize, resp.ContentLength), float64(currentSize)/float64(resp.ContentLength)*100, resp.ContentLength)
+		fmt.Printf("\r[%s] %.2f%% of %d bytes\n", pb.ProgressBar(currentSize, resp.ContentLength), float64(currentSize)/float64(resp.ContentLength)*100, resp.ContentLength)
 	}
 
 	d.Result <- downloadResult{
@@ -116,6 +116,6 @@ func (d *downloader) DownloadFile(url, fileName string) {
 
 func oneSecondTick(size *int64, r *http.Response, ticker *time.Ticker) {
 	for range ticker.C {
-		log.Printf("\r[%s] %.2f%% of %d bytes", pb.ProgressBar(*size, r.ContentLength), float64(*size)/float64(r.ContentLength)*100, r.ContentLength)
+		fmt.Printf("\r[%s] %.2f%% of %d bytes", pb.ProgressBar(*size, r.ContentLength), float64(*size)/float64(r.ContentLength)*100, r.ContentLength)
 	}
 }
