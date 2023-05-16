@@ -6,7 +6,7 @@ import (
 	"strconv"
 )
 
-func SwitchCases(flag string) (int, error) {
+func StringSizeToBytes(flag string) (int, error) {
 	re := `^(\d+)((?:G|M|K)?b)$`
 
 	match := regexp.MustCompile(re).FindStringSubmatch(flag)
@@ -22,12 +22,12 @@ func SwitchCases(flag string) (int, error) {
 
 	unit := match[2]
 	switch unit {
+	case "b":
+		return amount, nil
 	case "Kb":
 		return amount * 1024, nil
 	case "Mb":
 		return amount * 1024 * 1024, nil
-	case "Gb":
-		return amount * 1024 * 1024 * 1024, nil
 	default:
 		return 0, fmt.Errorf("unrecognized unit in flag")
 	}

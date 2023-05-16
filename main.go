@@ -1,28 +1,26 @@
 package main
 
 import (
-	"fmt"
-	"io/fs"
 	"log"
 	"os"
-	"path"
 	"strings"
-	"sync"
 	"time"
 	"wget/packages/downloader"
-	flag_parser "wget/packages/flag-parser"
+	fp "wget/packages/flag-parser"
 	"wget/packages/utils"
 )
 
 const outputFormat = "Content size: %d bytes [~ %.2f Mb]\nSaving file to: %s\n"
 
 func main() {
+	log.SetFlags(0)
+
 	if len(os.Args) < 2 {
-		fmt.Println("Usage: go run main.go URL")
+		log.Println("Usage: go run main.go URL")
 		return
 	}
 
-	storage, err := flag_parser.CreateParser().
+	storage, err := fp.CreateParser().
 		Add("B", "backgound download. When the program containing this flag is executed it should output : Output will be written to `wget-log`", true).
 		Add("O", "specifies file name", false).
 		Add("P", "specifies file location", false).
@@ -43,11 +41,11 @@ func main() {
 		urls = append(urls, urlArg[0])
 	}
 
-	fmt.Printf("Start at %s\n", formatTime(time.Now()))
+	log.Printf("Start at %s\n", formatTime(time.Now()))
 
 	fileName := ""
 	dirPath := ""
-	limit := 0
+	rateLimit := 0
 
 	if flag, err := storage.GetFlag("O"); err == nil && !storage.HasFlag("i") {
 		fileName = flag.GetValue()
@@ -65,52 +63,42 @@ func main() {
 		if !strings.HasSuffix(dirPath, "/") {
 			dirPath += "/"
 		}
-
-		if _, err := os.Stat(dirPath); os.IsNotExist(err) {
-			err := os.Mkdir(dirPath, fs.ModeDir|0755)
-			if err != nil {
-				log.Fatalln(err)
-			}
+		err := utils.CreateFolder(dirPath)
+		if err != nil {
+			log.Fatalf("Error creating folder: %v\n", err)
 		}
 	}
 
 	if flag, err := storage.GetFlag("rate-limit"); err == nil {
-		limit, err = utils.SwitchCases(flag.GetValue())
+		rateLimit, err = utils.StringSizeToBytes(flag.GetValue())
 		if err != nil {
 			log.Fatalf("Error: %v", err)
 		}
 	}
 
-	ch := make(chan downloader.DownloadResult)
-
-	var wg sync.WaitGroup
+	down := downloader.CreateDownloader(dirPath, rateLimit, len(urls) == 1)
 
 	go func() {
-		defer close(ch)
+		defer close(down.Result)
 
 		for _, url := range urls {
-			wg.Add(1)
+			down.WG.Add(1)
 
-			temp := fileName
-			if fileName == "" {
-				temp = path.Base(url)
-			}
-
-			go downloader.Download(url, temp, dirPath, limit, ch, &wg)
+			go down.DownloadFile(url, fileName)
 		}
 
-		wg.Wait()
+		down.WG.Wait()
 	}()
 
-	for result := range ch {
+	for result := range down.Result {
 		if result.Err != nil {
 			log.Fatalln(result.Err)
 		}
 
-		fmt.Printf(outputFormat, result.Size, bytesToMb(result.Size), result.File)
+		log.Printf(outputFormat, result.Size, bytesToMb(result.Size), result.File)
 	}
 
-	fmt.Printf("Finished at %s\n", formatTime(time.Now()))
+	log.Printf("Finished at %s\n", formatTime(time.Now()))
 }
 
 func formatTime(t time.Time) string {
