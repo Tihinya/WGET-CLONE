@@ -3,7 +3,6 @@ package downloader
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -56,9 +55,9 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	}
 
 	if resp.StatusCode == http.StatusOK {
-		log.Printf("Downloading file: %s. Status 200 OK\n", fileName)
+		fmt.Printf("Downloading file: %s. Status 200 OK\n", fileName)
 	} else {
-		log.Printf("Error downloading %s: recieved status code %d\n", url, resp.StatusCode)
+		fmt.Printf("Error downloading %s: recieved status code %d\n", url, resp.StatusCode)
 	}
 
 	file, err := os.Create(d.path + fileName)

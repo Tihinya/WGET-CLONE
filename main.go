@@ -1,8 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 	"wget/packages/downloader"
@@ -35,13 +37,31 @@ func main() {
 		log.Fatalf("Error parsing flag: %v\n", err)
 	}
 
+	if storage.HasFlag("B") {
+		file, err := os.OpenFile("wget-log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening file: %v", err)
+		}
+		defer file.Close()
+
+		fmt.Println(`Output will be written to "wget-log".`)
+
+		// cmd := exec.Command(os.Args[0], "https://golang.org/dl/go1.16.3.linux-amd64.tar.gz")
+		cmd := exec.Command(os.Args[0], storage.ArgsExcluded("B")...)
+		cmd.Stdout = file
+		cmd.Stderr = file
+
+		cmd.Start()
+		os.Exit(0)
+	}
+
 	urls := make([]string, 0)
 
 	if urlArg := storage.GetTags(); len(urlArg) > 0 {
 		urls = append(urls, urlArg[0])
 	}
 
-	log.Printf("Start at %s\n", formatTime(time.Now()))
+	fmt.Printf("Start at %s\n", formatTime(time.Now()))
 
 	fileName := ""
 	dirPath := ""
@@ -118,7 +138,7 @@ func main() {
 		}
 	}
 
-	log.Printf("Finished at %s\n", formatTime(time.Now()))
+	fmt.Printf("Finished at %s\n", formatTime(time.Now()))
 }
 
 func formatTime(t time.Time) string {
