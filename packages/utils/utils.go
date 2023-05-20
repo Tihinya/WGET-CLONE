@@ -23,7 +23,7 @@ func ReadLines(path string) ([]string, error) {
 
 func CreateFolder(path string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		err := os.Mkdir(path, fs.ModeDir|0755)
+		err := os.MkdirAll(path, fs.ModeDir|0755)
 		return err
 	}
 	return nil
@@ -32,6 +32,16 @@ func CreateFolder(path string) error {
 func IsContains[V int | string](arr []V, value V) bool {
 	for _, v := range arr {
 		if v == value {
+			return true
+		}
+	}
+
+	return false
+}
+
+func IsContainsArr(arr []string, include []string) bool {
+	for _, v := range arr {
+		if IsContains(include, v) {
 			return true
 		}
 	}

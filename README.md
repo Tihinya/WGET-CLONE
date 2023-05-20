@@ -2,20 +2,20 @@
 
 ## Features
 
-- download file with given URL
+- ✅ download file with given URL
   - ✅ under a different name
   - ✅ in specific directory
   - ✅ with limiting the rate speed of a download
-  - download file in backgorund
-- download multiple files by reading links from specified file
-- download entire website page
+  - ✅ download file in backgorund
+- ✅ download multiple files by reading links from specified file
+- ✅ download entire website page
 - display:
   - ✅ time when download started(format yyyy-mm-dd hh:mm:ss)
   - ✅ status request if OK, otherwise show error
-  - size of downloaded content(Mb, Gb)
+  - ✅ size of downloaded content(Mb, Gb)
   - ✅ name and path of saved file
   - progress bar:
-    - size which already downloaded in Kb or Mb
+    - ✅ size which already downloaded in Kb or Mb
     - ✅ percantage
     - remaining time
   - ✅ time when download finished(format yyyy-mm-dd hh:mm:ss)
@@ -43,3 +43,9 @@ finished at 2017-10-14 03:46:07
 6. `--mirror` download entire website
    1. `--reject=<jpg,gif> -R=<jpg,gif>` specifies which file suffixes will be avoided
    2. `--exclude=</assets,/css> -X=</assets,/css>` specifies which paths will be avoided
+
+## Mirror
+
+1. Need to check `src` attr in tags: link, script, img
+2. Need to check `href` attr in tags: a
+3. Need to check url(\`\`) in css

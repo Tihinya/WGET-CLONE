@@ -32,3 +32,24 @@ func StringSizeToBytes(flag string) (int, error) {
 		return 0, fmt.Errorf("unrecognized unit in flag")
 	}
 }
+
+type size struct {
+	Amount float64
+	Unit   string
+}
+
+var units = [...]string{"b", "Kb", "Mb", "Gb"}
+
+func FromBytesToBiggest(bytes int64) size {
+	i := 0
+	temp := float64(bytes)
+	for temp >= 1024.0 && i < 3 {
+		temp /= 1024.0
+		i++
+	}
+
+	return size{
+		Amount: temp,
+		Unit:   units[i],
+	}
+}
