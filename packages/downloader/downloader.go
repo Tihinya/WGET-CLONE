@@ -69,16 +69,17 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	}
 
 	defer file.Close()
-
 	currentSize := int64(0)
+	speed := float64(0)
 	ticker := time.NewTicker(time.Second)
+
 	defer ticker.Stop()
 
 	if resp.ContentLength > 0 && d.progressBar {
-		go oneSecondTick(&currentSize, resp, ticker)
+		go oneSecondTick(&currentSize, resp, ticker, &speed)
 	}
 
-	limit := pb.NewLimitedReader(resp.Body, d.rateLimit, &currentSize)
+	limit := pb.NewLimitedReader(resp.Body, d.rateLimit, &currentSize, &speed)
 	buffer := make([]byte, 32768)
 	if d.rateLimit > 0 {
 		buffer = make([]byte, d.rateLimit)
@@ -108,7 +109,7 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	cs := utils.FromBytesToBiggest(currentSize)
 
 	if resp.ContentLength > 0 && d.progressBar {
-		fmt.Printf("\r%.2f %s / %.2f %s [%s] %.2f%%\n", cs.Amount, cs.Unit, ts.Amount, ts.Unit, pb.ProgressBar(currentSize, resp.ContentLength), float64(currentSize)/float64(resp.ContentLength)*100)
+		fmt.Printf("\r\033[K%.2f %s / %.2f %s [%s] %.2f%%\n", cs.Amount, cs.Unit, ts.Amount, ts.Unit, pb.ProgressBar(currentSize, resp.ContentLength), float64(currentSize)/float64(resp.ContentLength)*100)
 	}
 
 	d.Result <- downloadResult{
@@ -118,10 +119,18 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	}
 }
 
-func oneSecondTick(size *int64, r *http.Response, ticker *time.Ticker) {
+func oneSecondTick(totalSize *int64, r *http.Response, ticker *time.Ticker, speed *float64) {
 	for range ticker.C {
-		cs := utils.FromBytesToBiggest(*size)
+		cs := utils.FromBytesToBiggest(*totalSize)
 		ts := utils.FromBytesToBiggest(r.ContentLength)
-		fmt.Printf("\r%.2f %s / %.2f %s [%s] %.2f%%", cs.Amount, cs.Unit, ts.Amount, ts.Unit, pb.ProgressBar(*size, r.ContentLength), float64(*size)/float64(r.ContentLength)*100)
+		downloadSpeed := utils.FromBytesToBiggest(int64(*speed))
+		timeRemaining := (r.ContentLength - *totalSize) / int64(*speed)
+		fmt.Printf("\r\033[K%.2f %s / %.2f %s [%s] %.2f%%  %.2f %s/s %vs",
+			cs.Amount, cs.Unit,
+			ts.Amount, ts.Unit,
+			pb.ProgressBar(*totalSize, r.ContentLength),
+			float64(*totalSize)/float64(r.ContentLength)*100,
+			downloadSpeed.Amount, downloadSpeed.Unit,
+			timeRemaining)
 	}
 }

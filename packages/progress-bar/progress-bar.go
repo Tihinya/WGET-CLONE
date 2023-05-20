@@ -15,17 +15,23 @@ func ProgressBar(currentSize, totalSize int64) string {
 
 // LimitedReader limits the read speed by introducing delays between reads
 type LimitedReader struct {
-	r          io.Reader
-	totalBytes *int64
-	isLimited  bool
+	r            io.Reader
+	totalBytes   *int64
+	isLimited    bool
+	time         time.Time
+	timeInterval int64
+	speed        *float64
 }
 
 // NewLimitedReader creates a new LimitedReader with the specified read speed
-func NewLimitedReader(r io.Reader, rateLimit int, totalBytes *int64) *LimitedReader {
+func NewLimitedReader(r io.Reader, rateLimit int, totalBytes *int64, speed *float64) *LimitedReader {
 	return &LimitedReader{
-		r:          r,
-		isLimited:  rateLimit > 0,
-		totalBytes: totalBytes,
+		r:            r,
+		isLimited:    rateLimit > 0,
+		totalBytes:   totalBytes,
+		time:         time.Now(),
+		timeInterval: 0,
+		speed:        speed,
 	}
 }
 
@@ -40,7 +46,11 @@ func (lr *LimitedReader) Close() error {
 // Read reads data from the underlying reader with a limited speed
 func (lr *LimitedReader) Read(p []byte) (n int, err error) {
 	n, err = lr.r.Read(p)
+	timeNow := time.Now()
 
+	lr.timeInterval = int64(timeNow.Sub(lr.time))
+	*lr.speed = float64(n) / (float64(lr.timeInterval) / float64(time.Second))
+	lr.time = timeNow
 	*lr.totalBytes += int64(n)
 
 	if lr.isLimited {
