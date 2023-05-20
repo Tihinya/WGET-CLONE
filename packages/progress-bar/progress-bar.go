@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const progressBarWidth = 40
+const progressBarWidth = 20
 
 func ProgressBar(currentSize, totalSize int64) string {
 	progress := int(float64(currentSize) / float64(totalSize) * float64(progressBarWidth))

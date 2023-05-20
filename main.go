@@ -78,24 +78,44 @@ func main() {
 
 	down := downloader.CreateDownloader(dirPath, rateLimit, len(urls) == 1)
 
-	go func() {
-		defer close(down.Result)
+	if !storage.HasFlag("mirror") {
+		go func() {
+			defer close(down.Result)
 
-		for _, url := range urls {
-			down.WG.Add(1)
+			for _, url := range urls {
+				down.WG.Add(1)
 
-			go down.DownloadFile(url, fileName)
+				go down.DownloadFile(url, fileName)
+			}
+
+			down.WG.Wait()
+		}()
+
+		for result := range down.Result {
+			if result.Err != nil {
+				log.Fatalln(result.Err)
+			}
+
+			log.Printf(outputFormat, result.Size, bytesToMb(result.Size), result.File)
+		}
+	} else {
+		types := []string{}
+		dirs := []string{}
+
+		if flag, err := storage.GetFlag("reject"); err == nil {
+			types = strings.Split(flag.GetValue(), ",")
+		}
+		if flag, err := storage.GetFlag("exclude"); err == nil {
+			temp := strings.Split(flag.GetValue(), ",")
+			for _, v := range temp {
+				dirs = append(dirs, strings.TrimPrefix(v, "/"))
+			}
 		}
 
-		down.WG.Wait()
-	}()
-
-	for result := range down.Result {
-		if result.Err != nil {
-			log.Fatalln(result.Err)
+		err = down.DownloadSite(urls[0], types, dirs)
+		if err != nil {
+			log.Fatalln(err)
 		}
-
-		log.Printf(outputFormat, result.Size, bytesToMb(result.Size), result.File)
 	}
 
 	log.Printf("Finished at %s\n", formatTime(time.Now()))

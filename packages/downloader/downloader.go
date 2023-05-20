@@ -1,6 +1,7 @@
 package downloader
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"sync"
 	"time"
 	pb "wget/packages/progress-bar"
+	"wget/packages/utils"
 )
 
 type downloader struct {
@@ -103,8 +105,11 @@ func (d *downloader) DownloadFile(url, fileName string) {
 		}
 	}
 
+	ts := utils.FromBytesToBiggest(resp.ContentLength)
+	cs := utils.FromBytesToBiggest(currentSize)
+
 	if resp.ContentLength > 0 && d.progressBar {
-		log.Printf("\r[%s] %.2f%% of %d bytes\n", pb.ProgressBar(currentSize, resp.ContentLength), float64(currentSize)/float64(resp.ContentLength)*100, resp.ContentLength)
+		fmt.Printf("\r%.2f %s / %.2f %s [%s] %.2f%%\n", cs.Amount, cs.Unit, ts.Amount, ts.Unit, pb.ProgressBar(currentSize, resp.ContentLength), float64(currentSize)/float64(resp.ContentLength)*100)
 	}
 
 	d.Result <- downloadResult{
@@ -116,6 +121,8 @@ func (d *downloader) DownloadFile(url, fileName string) {
 
 func oneSecondTick(size *int64, r *http.Response, ticker *time.Ticker) {
 	for range ticker.C {
-		log.Printf("\r[%s] %.2f%% of %d bytes", pb.ProgressBar(*size, r.ContentLength), float64(*size)/float64(r.ContentLength)*100, r.ContentLength)
+		cs := utils.FromBytesToBiggest(*size)
+		ts := utils.FromBytesToBiggest(r.ContentLength)
+		fmt.Printf("\r%.2f %s / %.2f %s [%s] %.2f%%", cs.Amount, cs.Unit, ts.Amount, ts.Unit, pb.ProgressBar(*size, r.ContentLength), float64(*size)/float64(r.ContentLength)*100)
 	}
 }
