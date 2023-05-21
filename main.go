@@ -44,14 +44,14 @@ func main() {
 		}
 		defer file.Close()
 
-		fmt.Println(`Output will be written to "wget-log".`)
-
 		// cmd := exec.Command(os.Args[0], "https://golang.org/dl/go1.16.3.linux-amd64.tar.gz")
 		cmd := exec.Command(os.Args[0], storage.ArgsExcluded("B")...)
 		cmd.Stdout = file
 		cmd.Stderr = file
 
 		cmd.Start()
+
+		fmt.Printf("Output will be written to \"wget-log\". Process id: %d\n", cmd.Process.Pid)
 		os.Exit(0)
 	}
 

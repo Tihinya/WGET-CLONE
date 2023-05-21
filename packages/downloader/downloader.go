@@ -70,18 +70,24 @@ func (d *downloader) DownloadFile(url, fileName string) {
 
 	defer file.Close()
 	currentSize := int64(0)
-	speed := float64(0)
-	ticker := time.NewTicker(time.Second)
-
-	defer ticker.Stop()
+	speed := float64(1)
 
 	if resp.ContentLength > 0 && d.progressBar {
+		ticker := time.NewTicker(time.Second)
+
+		defer ticker.Stop()
 		go oneSecondTick(&currentSize, resp, ticker, &speed)
 	}
 
 	limit := pb.NewLimitedReader(resp.Body, d.rateLimit, &currentSize, &speed)
 	buffer := make([]byte, 32768)
 	if d.rateLimit > 0 {
+		// rate limit > 4 Mb (max size for buffer)
+		if d.rateLimit >= (4 * 1024 * 1024) {
+			a := float64(d.rateLimit) / (4.0 * 1024.0 * 1024.0)
+			c := float64(time.Second) / a
+			limit.Interval = time.Duration(c)
+		}
 		buffer = make([]byte, d.rateLimit)
 	}
 
