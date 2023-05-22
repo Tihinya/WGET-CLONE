@@ -45,8 +45,19 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	if fileName == "" {
 		fileName = path.Base(url)
 	}
+	client := http.Client{}
 
-	resp, err := http.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		d.Result <- downloadResult{
+			Err: err,
+		}
+		return
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+
+	// resp, err := http.Get(url)
+	resp, err := client.Do(req)
 	if err != nil {
 		d.Result <- downloadResult{
 			Err: err,
@@ -57,7 +68,10 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	if resp.StatusCode == http.StatusOK {
 		fmt.Printf("Downloading file: %s. Status 200 OK\n", fileName)
 	} else {
-		fmt.Printf("Error downloading %s: recieved status code %d\n", url, resp.StatusCode)
+		d.Result <- downloadResult{
+			Err: fmt.Errorf("Error downloading %s: recieved status code %d\n", url, resp.StatusCode),
+		}
+		return
 	}
 
 	file, err := os.Create(d.path + fileName)

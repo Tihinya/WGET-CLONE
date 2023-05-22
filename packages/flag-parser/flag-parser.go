@@ -126,5 +126,5 @@ func (flag Flag) GetValue() string {
 }
 
 func init() {
-	re = regexp.MustCompile(`^-(?:(?:-(?P<long>[a-zA-Z\-]{2,}))|(?P<short>[a-zA-Z]{1}))\s*(?:=\s*(?P<value>[a-zA-Z0-9/.,_-]{1,}))?$`)
+	re = regexp.MustCompile(`^-(?:(?:-(?P<long>[a-zA-Z\-]{2,}))|(?P<short>[a-zA-Z]{1}))\s*(?:=\s*(?P<value>[a-zA-Z0-9/.,_-~]{1,}))?$`)
 }

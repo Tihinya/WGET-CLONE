@@ -83,6 +83,10 @@ func main() {
 		if !strings.HasSuffix(dirPath, "/") {
 			dirPath += "/"
 		}
+		dirPath, err = utils.ParsePath(dirPath)
+		if err != nil {
+			log.Fatalf("Error no folder found: %v\n", err)
+		}
 		err := utils.CreateFolder(dirPath)
 		if err != nil {
 			log.Fatalf("Error creating folder: %v\n", err)

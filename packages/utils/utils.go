@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io/fs"
 	"os"
+	"strings"
 )
 
 func ReadLines(path string) ([]string, error) {
@@ -47,4 +48,14 @@ func IsContainsArr(arr []string, include []string) bool {
 	}
 
 	return false
+}
+func ParsePath(path string) (string, error) {
+	currentPath, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	if strings.HasPrefix(path, "~") {
+		currentPath += path[1:]
+	}
+	return currentPath, nil
 }
