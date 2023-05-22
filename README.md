@@ -1,51 +1,73 @@
 # wget
 
-## Features
+## Description
 
-- ✅ download file with given URL
-  - ✅ under a different name
-  - ✅ in specific directory
-  - ✅ with limiting the rate speed of a download
-  - ✅ download file in backgorund
-- ✅ download multiple files by reading links from specified file
-- ✅ download entire website page
-- display:
-  - ✅ time when download started(format yyyy-mm-dd hh:mm:ss)
-  - ✅ status request if OK, otherwise show error
-  - ✅ size of downloaded content(Mb, Gb)
-  - ✅ name and path of saved file
-  - progress bar:
-    - ✅ size which already downloaded in Kb or Mb
-    - ✅ percantage
-    - remaining time
-  - ✅ time when download finished(format yyyy-mm-dd hh:mm:ss)
+This project aims to recreate the functionality of the `wget` command-line tool using a compiled language. It allows downloading files from URLs, with options to save them under different names or in specific directories. Additional features include setting download speed limits, background downloading, asynchronous downloading of multiple files, and mirroring entire websites.
 
-Example of output:
+## Usage
+
+To run the program, use the following command:
 
 ```console
-start at 2017-10-14 03:46:06
-sending request, awaiting response... status 200 OK
-content size: 56370 [~0.06MB]
-saving file to: ./EMtmPFLWkAA8CIS.jpg
- 55.05 KiB / 55.05 KiB [================================================================================================================] 100.00% 1.24 MiB/s 0s
+go run main.go [FLAGS] [URL]
+```
 
-Downloaded [https://pbs.twimg.com/media/EMtmPFLWkAA8CIS.jpg]
-finished at 2017-10-14 03:46:07
+Alternatively, you can build a binary file and run it directly:
+
+```console
+go build -o wget main.go
+./wget [FLAGS] [URL]
 ```
 
 ## Flags
 
-1. `-B` backgound download. When the program containing this flag is executed it should output : Output will be written to "wget-log"
-2. `-O=<name.jpg>` specifies file name
-3. `-P=</Download/>` specifies file location
-4. `--rate-limit=<200k, 2M>` specifies limit of speed rate
-5. `-i=<file with links>` asynchronously download multiple files from given URLs
-6. `--mirror` download entire website
-   1. `--reject=<jpg,gif> -R=<jpg,gif>` specifies which file suffixes will be avoided
-   2. `--exclude=</assets,/css> -X=</assets,/css>` specifies which paths will be avoided
+The program supports the following flags:
 
-## Mirror
+1. `-B`: Enables background download. Output will be written to "wget-log".
+2. `-O=<name.jpg>`: Specifies the file name.
+3. `-P=</Download/>`: Specifies the file location.
+4. `--rate-limit=<200k, 2M>`: Sets the speed limit for downloads.
+5. `-i=<file with links>`: Downloads multiple files asynchronously from the given URLs.
+6. `--mirror`: Downloads an entire website.
+   1. `--reject=<jpg,gif>`: Specifies file suffixes to be avoided during the download.
+   2. `--exclude=</assets,/css>`: Specifies paths to be excluded from the download.
 
-1. Need to check `src` attr in tags: link, script, img
-2. Need to check `href` attr in tags: a
-3. Need to check url(\`\`) in css
+## How Mirror Works
+
+The mirror functionality downloads an HTML file and searches for the following tags:
+
+1. `<a>` with `href` attribute
+2. `<link>` with `src` attribute
+3. `<script>` with `src` attribute
+4. `<img>` with `src` attribute
+
+The mirror only downloads files that are not links to other websites. It also checks CSS files for the `url()` function and attempts to find linked resources.
+
+## Features
+
+- Download files from URLs with various options
+  - Save files under different names or in specific directories
+  - Limit the download speed
+  - Perform background downloads
+- Download multiple files asynchronously using a file with links
+- Mirror entire website pages
+- Display information such as:
+  - Start time of the download (in the format yyyy-mm-dd hh:mm:ss)
+  - Status of the request (OK or error)
+  - Size of the downloaded content (in Mb or Gb)
+  - Name and path of the saved file
+  - Progress bar showing the amount downloaded, percentage, and remaining time
+  - Finish time of the download (in the format yyyy-mm-dd hh:mm:ss)
+
+Example output:
+
+```console
+Start at 2017-10-14 03:46:06
+Sending request, awaiting response... Status: 200 OK
+Content size: 56370 [~0.06MB]
+Saving file to: ./EMtmPFLWkAA8CIS.jpg
+ 55.05 KiB / 55.05 KiB [==================================] 100.00% 1.24 MiB/s 0s
+
+Downloaded [https://pbs.twimg.com/media/EMtmPFLWkAA8CIS.jpg]
+Finished at 2017-10-14 03:46:07
+```

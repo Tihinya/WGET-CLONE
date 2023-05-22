@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"io/fs"
 	"os"
+	"path"
 	"strings"
 )
 
@@ -49,13 +50,19 @@ func IsContainsArr(arr []string, include []string) bool {
 
 	return false
 }
-func ParsePath(path string) (string, error) {
-	currentPath, err := os.UserHomeDir()
-	if err != nil {
-		return "", err
+func ParsePath(dirPath string) (string, error) {
+	temp := dirPath
+	if strings.HasPrefix(dirPath, "~/") {
+		userPath, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		temp = path.Join(userPath, dirPath[2:])
 	}
-	if strings.HasPrefix(path, "~") {
-		currentPath += path[1:]
+
+	if !strings.HasSuffix(temp, "/") {
+		temp += "/"
 	}
-	return currentPath, nil
+
+	return temp, nil
 }

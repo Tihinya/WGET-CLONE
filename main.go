@@ -12,7 +12,7 @@ import (
 	"wget/packages/utils"
 )
 
-const outputFormat = "Content size: %d bytes [~ %.2f Mb]\nSaving file to: %s\n"
+const outputFormat = "Content size: %d bytes [~ %.2f %s]\nSaving file to: %s\n"
 
 func main() {
 	log.SetFlags(0)
@@ -64,7 +64,7 @@ func main() {
 	fmt.Printf("Start at %s\n", formatTime(time.Now()))
 
 	fileName := ""
-	dirPath := ""
+	dirPath := "./"
 	rateLimit := 0
 
 	if flag, err := storage.GetFlag("O"); err == nil && !storage.HasFlag("i") {
@@ -79,14 +79,11 @@ func main() {
 	}
 
 	if flag, err := storage.GetFlag("P"); err == nil {
-		dirPath = flag.GetValue()
-		if !strings.HasSuffix(dirPath, "/") {
-			dirPath += "/"
-		}
-		dirPath, err = utils.ParsePath(dirPath)
+		dirPath, err = utils.ParsePath(flag.GetValue())
 		if err != nil {
-			log.Fatalf("Error no folder found: %v\n", err)
+			log.Fatalf("Error with parsing path: %v\n", err)
 		}
+
 		err := utils.CreateFolder(dirPath)
 		if err != nil {
 			log.Fatalf("Error creating folder: %v\n", err)
@@ -119,8 +116,9 @@ func main() {
 			if result.Err != nil {
 				log.Fatalln(result.Err)
 			}
+			res := utils.FromBytesToBiggest(result.Size)
 
-			log.Printf(outputFormat, result.Size, bytesToMb(result.Size), result.File)
+			log.Printf(outputFormat, result.Size, res.Amount, res.Unit, result.File)
 		}
 	} else {
 		types := []string{}
@@ -147,8 +145,4 @@ func main() {
 
 func formatTime(t time.Time) string {
 	return t.Format(time.DateTime)
-}
-
-func bytesToMb(bytes int64) float64 {
-	return float64(bytes) / (1024 * 1024)
 }

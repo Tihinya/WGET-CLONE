@@ -69,12 +69,12 @@ func (d *downloader) DownloadFile(url, fileName string) {
 		fmt.Printf("Downloading file: %s. Status 200 OK\n", fileName)
 	} else {
 		d.Result <- downloadResult{
-			Err: fmt.Errorf("Error downloading %s: recieved status code %d\n", url, resp.StatusCode),
+			Err: fmt.Errorf("error downloading %s: recieved status code %d", url, resp.StatusCode),
 		}
 		return
 	}
 
-	file, err := os.Create(d.path + fileName)
+	file, err := os.Create(path.Join(d.path, fileName))
 	if err != nil {
 		d.Result <- downloadResult{
 			Err: err,
@@ -84,16 +84,17 @@ func (d *downloader) DownloadFile(url, fileName string) {
 
 	defer file.Close()
 	currentSize := int64(0)
-	speed := float64(1)
+	lastTime := time.Now()
+	lastSize := int64(0)
 
 	if resp.ContentLength > 0 && d.progressBar {
 		ticker := time.NewTicker(time.Second)
 
 		defer ticker.Stop()
-		go oneSecondTick(&currentSize, resp, ticker, &speed)
+		go oneSecondTick(&currentSize, resp, ticker, &lastTime, &lastSize)
 	}
 
-	limit := pb.NewLimitedReader(resp.Body, d.rateLimit, &currentSize, &speed)
+	limit := pb.NewLimitedReader(resp.Body, d.rateLimit, &currentSize)
 	buffer := make([]byte, 32768)
 	if d.rateLimit > 0 {
 		// rate limit > 4 Mb (max size for buffer)
@@ -139,12 +140,22 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	}
 }
 
-func oneSecondTick(totalSize *int64, r *http.Response, ticker *time.Ticker, speed *float64) {
+func oneSecondTick(totalSize *int64, r *http.Response, ticker *time.Ticker, lastTime *time.Time, lastSize *int64) {
 	for range ticker.C {
 		cs := utils.FromBytesToBiggest(*totalSize)
 		ts := utils.FromBytesToBiggest(r.ContentLength)
-		downloadSpeed := utils.FromBytesToBiggest(int64(*speed))
-		timeRemaining := (r.ContentLength - *totalSize) / int64(*speed)
+
+		timeInterval := int64(time.Since(*lastTime))
+		speed := float64(*totalSize-*lastSize) / (float64(timeInterval) / float64(time.Second))
+		if speed == 0 {
+			speed = 1
+		}
+		temp := time.Now()
+		lastTime = &temp
+		*lastSize = *totalSize
+
+		downloadSpeed := utils.FromBytesToBiggest(int64(speed))
+		timeRemaining := (r.ContentLength - *totalSize) / int64(speed)
 		fmt.Printf("\r\033[K%.2f %s / %.2f %s [%s] %.2f%%  %.2f %s/s %vs",
 			cs.Amount, cs.Unit,
 			ts.Amount, ts.Unit,

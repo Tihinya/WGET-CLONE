@@ -19,7 +19,7 @@ type FileInfo struct {
 }
 
 func (d *downloader) DownloadSite(url string, types, dirs []string) error {
-	basePath := strings.SplitN(url, "://", 2)[1]
+	basePath := path.Base(url)
 	if !strings.HasSuffix(url, "/") {
 		url += "/"
 	}

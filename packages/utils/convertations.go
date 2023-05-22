@@ -7,11 +7,11 @@ import (
 )
 
 func StringSizeToBytes(flag string) (int, error) {
-	re := `^(\d+)((?:G|M|K)?b)$`
+	re := `^(\d+)((?:M|k|b){1})$`
 
 	match := regexp.MustCompile(re).FindStringSubmatch(flag)
 	if len(match) < 3 {
-		return 0, fmt.Errorf("you used unallowed format, input example: --rate-limit=200Kb")
+		return 0, fmt.Errorf("you used unallowed format, input example: --rate-limit=200k")
 	}
 
 	amountStr := match[1]
@@ -24,9 +24,9 @@ func StringSizeToBytes(flag string) (int, error) {
 	switch unit {
 	case "b":
 		return amount, nil
-	case "Kb":
+	case "k":
 		return amount * 1024, nil
-	case "Mb":
+	case "M":
 		return amount * 1024 * 1024, nil
 	default:
 		return 0, fmt.Errorf("unrecognized unit in flag")
