@@ -13,36 +13,50 @@ type Flag struct {
 }
 
 type flagParser struct {
-	whitelist map[string]Flag
+	flags   map[string]*Flag
+	aliases map[string]string
 }
 
 type flagStorage struct {
-	flags map[string]Flag
-	tags  []string
+	flags   map[string]*Flag
+	aliases map[string]string
+	tags    []string
 }
 
 var re *regexp.Regexp
 
 func CreateParser() *flagParser {
 	return &flagParser{
-		whitelist: make(map[string]Flag),
+		flags:   make(map[string]*Flag),
+		aliases: make(map[string]string),
 	}
 }
 
-func (f *flagParser) Add(flagName, description string, isBool bool) *flagParser {
-	if _, exist := f.whitelist[flagName]; !exist {
-		f.whitelist[flagName] = Flag{
-			description: description,
-			isBool:      isBool,
-		}
+func (fp *flagParser) Add(longHand, shortHand, description string, isBool bool) *flagParser {
+	f := &Flag{
+		description: description,
+		isBool:      isBool,
 	}
 
-	return f
+	if _, exists := fp.flags[shortHand]; shortHand != "" && !exists {
+		fp.flags[shortHand] = f
+	}
+	if _, exists := fp.flags[longHand]; longHand != "" && !exists {
+		fp.flags[longHand] = f
+	}
+
+	if longHand != "" && shortHand != "" {
+		fp.aliases[longHand] = shortHand
+		fp.aliases[shortHand] = longHand
+	}
+
+	return fp
 }
 
 func (p *flagParser) Parse(args []string) (*flagStorage, error) {
 	storage := &flagStorage{
-		flags: make(map[string]Flag),
+		flags:   make(map[string]*Flag),
+		aliases: p.aliases,
 	}
 
 	for _, value := range args {
@@ -61,7 +75,7 @@ func (p *flagParser) Parse(args []string) (*flagStorage, error) {
 			flagName = match[1]
 		}
 
-		if flag, exist := p.whitelist[flagName]; exist {
+		if flag, exist := p.flags[flagName]; exist {
 			if flag.isBool && match[3] != "" {
 				return nil, fmt.Errorf(`bool flag "%s" cannot have value`, flagName)
 			}
@@ -72,22 +86,25 @@ func (p *flagParser) Parse(args []string) (*flagStorage, error) {
 			storage.flags[flagName] = flag
 			continue
 		}
-
-		return nil, fmt.Errorf("flag %s not found", flagName)
 	}
 
 	return storage, nil
 }
 
 func (storage flagStorage) HasFlag(flagName string) bool {
-	_, exist := storage.flags[flagName]
+	_, exists := storage.flags[flagName]
 
-	return exist
+	return exists
 }
 
 func (storage flagStorage) GetFlag(flagName string) (*Flag, error) {
 	if flag, exists := storage.flags[flagName]; exists {
-		return &flag, nil
+		return flag, nil
+	}
+	if alias, exists := storage.aliases[flagName]; exists {
+		if flag, exists := storage.flags[alias]; exists {
+			return flag, nil
+		}
 	}
 	return nil, fmt.Errorf("no such flag %s", flagName)
 }

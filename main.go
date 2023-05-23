@@ -12,7 +12,7 @@ import (
 	"wget/packages/utils"
 )
 
-const outputFormat = "Content size: %d bytes [~ %.2f %s]\nSaving file to: %s\n"
+const outputFormat = "\nContent size: %d bytes [~ %.2f %s]\nSaving file to: %s\n"
 
 func main() {
 	log.SetFlags(0)
@@ -23,14 +23,14 @@ func main() {
 	}
 
 	storage, err := fp.CreateParser().
-		Add("B", "backgound download. When the program containing this flag is executed it should output : Output will be written to `wget-log`", true).
-		Add("O", "specifies file name", false).
-		Add("P", "specifies file location", false).
-		Add("rate-limit", "specifies limit of speed rate", false).
-		Add("i", "asynchronously download multiple files from given URLs", false).
-		Add("mirror", "download entire website", true).
-		Add("reject", "specifies which file suffixes will be avoided", false).
-		Add("exclude", "specifies which paths will be avoided", false).
+		Add("B", "", "backgound download. When the program containing this flag is executed it should output : Output will be written to `wget-log`", true).
+		Add("O", "", "specifies file name", false).
+		Add("P", "", "specifies file location", false).
+		Add("rate-limit", "", "specifies limit of speed rate", false).
+		Add("i", "", "asynchronously download multiple files from given URLs", false).
+		Add("mirror", "", "download entire website", true).
+		Add("reject", "R", "specifies which file suffixes will be avoided", false).
+		Add("exclude", "X", "specifies which paths will be avoided", false).
 		Parse(os.Args[1:])
 
 	if err != nil {
@@ -44,7 +44,6 @@ func main() {
 		}
 		defer file.Close()
 
-		// cmd := exec.Command(os.Args[0], "https://golang.org/dl/go1.16.3.linux-amd64.tar.gz")
 		cmd := exec.Command(os.Args[0], storage.ArgsExcluded("B")...)
 		cmd.Stdout = file
 		cmd.Stderr = file

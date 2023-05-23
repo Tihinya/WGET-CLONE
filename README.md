@@ -4,6 +4,8 @@
 
 This project aims to recreate the functionality of the `wget` command-line tool using a compiled language. It allows downloading files from URLs, with options to save them under different names or in specific directories. Additional features include setting download speed limits, background downloading, asynchronous downloading of multiple files, and mirroring entire websites.
 
+Audit can be accessed at https://github.com/01-edu/public/blob/master/subjects/wget/audit/README.md
+
 ## Usage
 
 To run the program, use the following command:
@@ -29,8 +31,8 @@ The program supports the following flags:
 4. `--rate-limit=<200k, 2M>`: Sets the speed limit for downloads.
 5. `-i=<file with links>`: Downloads multiple files asynchronously from the given URLs.
 6. `--mirror`: Downloads an entire website.
-   1. `--reject=<jpg,gif>`: Specifies file suffixes to be avoided during the download.
-   2. `--exclude=</assets,/css>`: Specifies paths to be excluded from the download.
+   1. `--reject=<jpg,gif> -R=<jpg,gif>`: Specifies file suffixes to be avoided during the download.
+   2. `--exclude=</assets,/css> -X=</assets,/css>`: Specifies paths to be excluded from the download.
 
 ## How Mirror Works
 

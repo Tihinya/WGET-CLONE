@@ -45,7 +45,6 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	if fileName == "" {
 		fileName = path.Base(url)
 	}
-	client := http.Client{}
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -56,14 +55,15 @@ func (d *downloader) DownloadFile(url, fileName string) {
 	}
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
 
-	// resp, err := http.Get(url)
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		d.Result <- downloadResult{
 			Err: err,
 		}
 		return
 	}
+
+	defer resp.Body.Close()
 
 	if resp.StatusCode == http.StatusOK {
 		fmt.Printf("Downloading file: %s. Status 200 OK\n", fileName)

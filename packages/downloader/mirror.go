@@ -14,7 +14,6 @@ import (
 type FileInfo struct {
 	path     []string
 	fileType string
-	// baseUrl  string
 	fileName string
 }
 
@@ -34,7 +33,7 @@ func (d *downloader) DownloadSite(url string, types, dirs []string) error {
 		log.Fatalln(err)
 	}
 
-	regs := []*regexp.Regexp{regexp.MustCompile(`(src|href)=['"]([0-9a-zA-Z./_-]+)['"]`), regexp.MustCompile(`url\(['"]([0-9a-zA-Z./_-]+)['"]\)`)}
+	regs := []*regexp.Regexp{regexp.MustCompile(`(src|href)=['"](?:/?([0-9a-zA-Z._-]+)/?)+['"]`), regexp.MustCompile(`url\(['"](?:/?([0-9a-zA-Z._-]+)/?)+['"]\)`)}
 
 	files := []*FileInfo{}
 	for _, r := range regs {
@@ -79,11 +78,13 @@ func DownloadHtml(url, trimmedUrl string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	defer r.Body.Close()
 
 	file, err := os.Create(path.Join(trimmedUrl, "index.html"))
 	if err != nil {
 		return "", err
 	}
+	defer file.Close()
 
 	str, err := io.ReadAll(r.Body)
 	if err != nil {
